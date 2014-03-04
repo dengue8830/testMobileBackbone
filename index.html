@@ -128,6 +128,10 @@
 	<!-- footer -->
 </div>
 
+<script src="js/persistencejs/persistence.js"></script>
+<script src="js/persistencejs/persistence.store.sql.js"></script>
+<script src="js/persistencejs/persistence.store.websql.js"></script>
+
 <script src="js/utils/utils.js"></script>
 <script src="js/connection/connection.js"></script>
 <script src="js/model/dao/sorteoDAO.js"></script>
@@ -136,9 +140,21 @@
 <script src="js/model/vo/vos.js"></script>
 <script src="js/controller/paginaController.js"></script>
 <script src="js/businesslogic/tombolaService.js"></script>
+
 <script type="text/javascript">
 /*var template = _.template($('#listaPersonasTemplate').html(), {personas: personas.models});
 $element.append(template);*/
+	persistence.store.websql.config(persistence, 'backbonePruebas', 'bd de prueba para backbone con persistence', 200000);
+	//var db = window.openDatabase("backbonePruebas", "1.0", "backbonePruebas", 200000);
+
+	/*JazzRecord.adapter = new JazzRecord.HTML5Adapter("backbonePruebas");
+	JazzRecord.migrate({refresh: false});*/
+	function initializeDB(){
+		persistence.schemaSync(function(){
+		 	//nothing
+		 });
+	}
+
 	(function($){
 		$.fn.serializeObject = function() {
 			var o = {};
@@ -156,6 +172,42 @@ $element.append(template);*/
 			return o;
 		};
 
+		//connection_createTables();
+/*		var Task = persistence.define('Task', {
+  name: "TEXT",
+  done: "BOOL"
+});
+		Task.prototype.sayHello = function(){alert('hello! '+this.name)};
+		Task.prototype.responder = function(){alert('muy bien, vos '+this.name+'?')};
+		//wipe local database clean
+persistence.reset(function(){
+
+ //write schema
+ persistence.schemaSync(function(){
+
+  //create ten dummy tasks
+  for(var i=1;i<=10;i++){
+   var task = new Task();
+   task.name = "Task " + i;
+   task.done = false;
+   persistence.add(task);
+  }
+ //ejemplo http://jacobmumm.com/demos/persistencetask/index.html
+  //commit dummy tasks to database
+  persistence.flush(function(){
+			Task.all().list(function(tasks){
+    tasks.forEach(function(task){
+    	task.sayHello();
+    	task.responder();
+      }
+      )});
+   //alert('inicializada bd')
+  });
+ });
+});*/
+
+
+
 		var trNoResult = '<tr id="trNoResult" class="even"><td colspan="4" align="center">Sin resultados</td></tr>'
 		var ListView = Backbone.View.extend({
 			el: $('#contenido'), // attaches `this.el` to an existing element.
@@ -163,6 +215,8 @@ $element.append(template);*/
 	    	initialize: function(){
 	      		_.bindAll(this, 'render'); // fixes loss of context for 'this' within methods
 				this.render(); // not all views are self-rendering. This one is.
+				initializeDB();
+				cargarPersonas();
 	    	},
 
 	    	render: function(){
@@ -175,25 +229,16 @@ $element.append(template);*/
     		},
 			agregar: function(){
 				var serializado = $('#personaForm').serializeObject();
-          		var personaVo = new PersonaVO(0, serializado.nombre, serializado.apellido, serializado.barrio, serializado.ciudad);
-          		//aqui se podria guardar y luego con un boton mostrar la tabla
-          		$('#trNoResult').remove();
-          		var trs = $('#tbodyResultados').children();
-
-	      		if('even' == $(trs[trs.length-1]).attr('class')){
-          			$('#tbodyResultados').append('<tr class="odd"><td align="center">'+personaVo.nombre+'</td><td align="center">'+personaVo.apellido+'</td><td align="center">'+personaVo.barrio+'</td><td align="center">'+personaVo.ciudad+'</td><td align="center"><input type="button" id="btnEditar" value="+" data-id="'+personaVo.idPersona+'"/><input type="button" id="btnEliminar" value="-" data-id="'+personaVo.idPersona+'"/></td></tr>');
-          		}else{
-          			$('#tbodyResultados').append('<tr class="even"><td align="center">'+personaVo.nombre+'</td><td align="center">'+personaVo.apellido+'</td><td align="center">'+personaVo.barrio+'</td><td align="center">'+personaVo.ciudad+'</td><td align="center"><input type="button" id="btnEditar" value="+" data-id="'+personaVo.idPersona+'"/><input type="button" id="btnEliminar" value="-" data-id="'+personaVo.idPersona+'"/></td></tr>');
-          		}
-
-          		$('#acordion').append('<div data-role="collapsible"><h3>'+personaVo.apellidoNombre()+'</h3><ul><li><p>Barrio: '+personaVo.barrio+'</p></li><li><p>Ciudad:'+personaVo.ciudad+'</p></li></div>').collapsibleset('refresh');
-          		$('#acordion').collapsibleset('refresh');
-
-          		/*personaVo.save(serializado, {
-          			success: function(persona){
-          				console.log('persona: '+persona);
-          			}
-          		});*/
+          		//var personaVo = new PersonaVO(0, serializado.nombre, serializado.apellido, serializado.barrio, serializado.ciudad);
+          		var personaVo = new PersonaVO();
+          		personaVo.nombre = serializado.nombre;
+          		personaVo.apellido = serializado.apellido;
+          		personaVo.barrio = serializado.barrio;
+          		personaVo.ciudad = serializado.ciudad;
+          		persistence.add(personaVo);
+          		persistence.flush();
+          		
+          		pintarPersona(personaVo);
 			},
 			editar: function(e){
 				console.log(e.currentTarget.attributes[3]);
@@ -202,13 +247,58 @@ $element.append(template);*/
 				$('#tbodyResultados').append(template);
 			},
 			eliminar: function(e){
-				console.log(e.currentTarget.attributes[3]);
-			}
-	  	});
+				var id = e.currentTarget.attributes[3].firstChild.data;
+				console.log(id);
+				/*var temp = new PersonaVO();
+				temp.id = e.currentTarget.attributes[3];
+				temp._new =false;
+				persistence.remove(temp);
+				persistence.flush();
+				alert(temp._new);*/
+
+				//Esto no funka nose porque
+				PersonaVO.load(id, 
+					function(personaVo){
+						console.log(personaVo);
+						persistence.remove(personaVo);
+						persistence.flush();
+					}
+				);
+
+				//Esto si funka pero consulta y despues borra :S
+				/*PersonaVO.all().filter("id", '=', id).list(function(personasVos){
+					var personaVo = personasVos[0];
+    				console.log(personaVo);
+					persistence.remove(personaVo);
+					persistence.flush();
+				});*/
+	  	}});
 
 	  	var listView = new ListView();
 
 	})(jQuery);
+
+	function cargarPersonas(){
+		PersonaVO.all().list(function(personasVos){
+    		personasVos.forEach(function(personaVo){
+    			pintarPersona(personaVo);
+      		}
+      )});
+	}
+
+	function pintarPersona(personaVo){
+		$('#trNoResult').remove();
+    	var trs = $('#tbodyResultados').children();
+
+  		if('even' == $(trs[trs.length-1]).attr('class')){
+  			$('#tbodyResultados').append('<tr class="odd"><td align="center">'+personaVo.nombre+'</td><td align="center">'+personaVo.apellido+'</td><td align="center">'+personaVo.barrio+'</td><td align="center">'+personaVo.ciudad+'</td><td align="center"><input type="button" id="btnEditar" value="+" data-id="'+personaVo.id+'"/><input type="button" id="btnEliminar" value="-" data-id="'+personaVo.id+'"/></td></tr>');
+  		}else{
+  			$('#tbodyResultados').append('<tr class="even"><td align="center">'+personaVo.nombre+'</td><td align="center">'+personaVo.apellido+'</td><td align="center">'+personaVo.barrio+'</td><td align="center">'+personaVo.ciudad+'</td><td align="center"><input type="button" id="btnEditar" value="+" data-id="'+personaVo.id+'"/><input type="button" id="btnEliminar" value="-" data-id="'+personaVo.id+'"/></td></tr>');
+  		}
+
+  		$('#acordion').append('<div data-role="collapsible"><h3>'+personaVo.apellidoNombre()+'</h3><ul><li><p>Barrio: '+personaVo.barrio+'</p></li><li><p>Ciudad:'+personaVo.ciudad+'</p></li></div>').collapsibleset('refresh');
+  		$('#acordion').collapsibleset('refresh');
+	}
 </script>
 </body>
 </html>

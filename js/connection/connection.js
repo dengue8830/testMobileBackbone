@@ -13,19 +13,21 @@ var insert_sorteos_8_sql = 'INSERT OR REPLACE INTO sorteos (id_sorteo, nombre, n
 
 function connection_createTables(callbackOk, callbackError) { 
     //var createtable_contador_sql ='CREATE TABLE IF NOT EXISTS contador (id_contador INTEGER PRIMARY KEY AUTOINCREMENT,fecha TEXT, cantidad INTEGER)';
-    var createtable_sorteos_sql ='CREATE TABLE IF NOT EXISTS sorteos (id_sorteo INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, num INTEGER, fecha TEXT, lugar TEXT, numeros TEXT)';
+    var createtable_personas_sql ='CREATE TABLE IF NOT EXISTS personas (idPersona INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, apellido TEXT, barrio TEXT, ciudad TEXT)';
+    var insert_agencia_1_sql = 'INSERT OR REPLACE INTO personas (idPersona, nombre, apellido, barrio, ciudad) VALUES (1, "nom", "ape", "1", "2")';
     
-    var createtable_agencias_sql ='CREATE TABLE IF NOT EXISTS agencias (id_agencia INTEGER PRIMARY KEY AUTOINCREMENT, id_localidad NUMBER, localidad TEXT, domicilio TEXT, barrio TEXT, telefono TEXT)';
+    /*var createtable_agencias_sql ='CREATE TABLE IF NOT EXISTS agencias (id_agencia INTEGER PRIMARY KEY AUTOINCREMENT, id_localidad NUMBER, localidad TEXT, domicilio TEXT, barrio TEXT, telefono TEXT)';
     
     var insert_agencia_1_sql = 'INSERT OR REPLACE INTO agencias (id_agencia, id_localidad, localidad, domicilio, barrio, telefono) VALUES (1, 1, "San Salvador", "Nechochea Nº 217", "Centro", "0388-4228179")';
     var insert_agencia_2_sql = 'INSERT OR REPLACE INTO agencias (id_agencia, id_localidad, localidad, domicilio, barrio, telefono) VALUES (2, 1, "San Salvador", "Belgrano Nº 818", "Centro", "0388-4223136")';
     var insert_agencia_3_sql = 'INSERT OR REPLACE INTO agencias (id_agencia, id_localidad, localidad, domicilio, barrio, telefono) VALUES (3, 2, "San Pedro", "Formosa Nº 237", "Falso", "0388-4212123")';
     
-    /*ejecutar(createtable_agencias_sql, null, connection_error);
+    ejecutar(createtable_agencias_sql, null, connection_error);
     ejecutar(insert_agencia_1_sql, null, connection_error);
     ejecutar(insert_agencia_2_sql, null, connection_error);
     ejecutar(insert_agencia_3_sql, null, connection_error);*/
-    ejecutar(createtable_sorteos_sql, function(){controller_mostrarSorteos_modificarFecha(fechaNavegacion);}, connection_error);
+    ejecutar(createtable_personas_sql, null, connection_error);
+    //ejecutar(insert_agencia_1_sql, null, connection_error);
 }
 
 function ejecutar(sql, callBackOk, callBackError){
